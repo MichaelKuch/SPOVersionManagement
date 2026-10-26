@@ -297,6 +297,9 @@ else {
 if ($useAppAuth) {
 Write-Host "[1/7] Connecting to SharePoint Online (Entra ID App)..." -ForegroundColor Yellow
 try {
+    # Import the module
+    Import-Module Microsoft.Online.SharePoint.PowerShell -DisableNameChecking -WarningAction SilentlyContinue
+
     # Check if already connected
     $alreadyConnected = $false
     try {
@@ -507,7 +510,6 @@ if ($pendingSessions -and $pendingSessions.Count -gt 0) {
 $currentSessionId = (Get-Date -Format 'yyyyMMdd_HHmmss') + "_" + [guid]::NewGuid().ToString().Substring(0, 8)
 
 #region Initialize module (SPO + Graph already connected above, module will detect active sessions)
-Write-Host ""
 Write-Host "[4/7] Initializing module..." -ForegroundColor Yellow
 try {
     $connectParams = @{
@@ -723,7 +725,7 @@ else {
 
 #region Tenant status (already handled by module init, show summary)
 Write-Host ""
-Write-Host "[5/7] Tenant status..." -ForegroundColor Yellow
+Write-Host "[6/7] Tenant status..." -ForegroundColor Yellow
 try {
     $tenantStorageFile = $appPaths.TenantStorageFile
     if (Test-Path $tenantStorageFile) {
