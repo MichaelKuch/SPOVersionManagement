@@ -218,7 +218,7 @@ If you don't have Microsoft Graph API permissions configured (or prefer not to g
 ```powershell
 .\Start-SPOVersionManagement.ps1 -AdminUrl "https://contoso-admin.sharepoint.com" `
     -MajorVersionLimit 5 `
-    -SkipGraph `
+    -SkipGraphConnection `
     -GraphReportCSV "C:\path\to\SharePointSiteUsageStorage.csv"
 ```
 

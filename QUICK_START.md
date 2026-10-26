@@ -147,7 +147,7 @@ cd C:\Tools\SPOVersionManagement
 .\Start-SPOVersionManagement.ps1 -AdminUrl "https://contoso-admin.sharepoint.com" -MajorVersionLimit 5 -Unattended
 
 # With manual Graph report (no Graph permissions)
-.\Start-SPOVersionManagement.ps1 -AdminUrl "https://contoso-admin.sharepoint.com" -MajorVersionLimit 5 -SkipGraph -GraphReportCSV "C:\path\to\report.csv"
+.\Start-SPOVersionManagement.ps1 -AdminUrl "https://contoso-admin.sharepoint.com" -MajorVersionLimit 5 -SkipGraphConnection -GraphReportCSV "C:\path\to\report.csv"
 ```
 
 ---
