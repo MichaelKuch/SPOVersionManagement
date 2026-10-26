@@ -718,10 +718,10 @@ The main execution screen for version cleanup operations. This is where you conf
     -MajorVersionLimit 5 `
     -MinorVersionLimit 0 `
     -MaxConcurrentJobs 100 `
-    -ReexecutionDays 60 `
+    -ReexecutionDays 60 `		// !PARAMETER DOES NOT EXIST!
     -IncludeSitesCSV "IncludeSites.csv" `
     -ExcludeSitesCSV "ExcludeSites.csv" `
-    -SkipGraph `
+    -SkipGraphConnection `
     -GraphReportCSV "SharePointSiteUsageStorage.csv" `
     -ManageRetentionPolicy `
     -Unattended
