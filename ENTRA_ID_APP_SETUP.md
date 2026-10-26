@@ -8,6 +8,21 @@ This tool uses **three separate Entra ID app registrations** for security isolat
 | **PnP App** (PnPApp) | File Archive Explorer — search files by extension via PnP.PowerShell | SharePoint (Sites.Read.All) |
 | **Purview App** (PurviewApp) | Retention policy suspend/resume via Security & Compliance | Exchange/Purview |
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!! After creating the self-signed certificates as described below, the Microsoft.Online.Sharepoint.Powershell module was unable
+!! to connect.  Even when the 'SPO Version Management'' certificate was installed in both the 'CurrentUser\My' and 'LocalMachine\My'
+!! certificate stores, this error message was displayed:
+!!
+!!   'Connect-SPOService: No certificate was found matching the specified parameters. Check the thumbprint or path, and then try again.
+!!
+!! It therefore looks like The Microsoft.Online.Sharepoint.Powershell module uses the
+!!   'X509Store.Certificates.Find(X509FindType.FindByThumbprint, thumbPrint, validOnly)''
+!! method with the validOnly parameter set to 'true' to retrieve certificates from the certificate store (CurrentUser\My or LocalMachine\My).
+!!
+!! Since the validOnly parameter is set to 'true', the self-signed certificate must also be added to the Trusted Root Authorities store so
+!! that Connect-SPOService can find the certificate by its SHA1 certificate thumbprint.
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 ---
 
 ## App 1: SPO App (Main Orchestrator)
