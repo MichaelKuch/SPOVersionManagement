@@ -1696,12 +1696,18 @@ function Get-TenantStorageHistoryAggregated {
         # Create temp file
         $tempFile = [System.IO.Path]::GetTempFileName() -replace '\.tmp$', '.csv'
         
-        # Download report (suppress SDK download progress output)
+        # Download report (suppress SDK download progress output, see https://github.com/microsoftgraph/msgraph-sdk-powershell/issues/3105)
         Write-Host "    Downloading report..." -ForegroundColor Gray
         $oldProgress = $ProgressPreference
         $ProgressPreference = 'SilentlyContinue'
         try {
-            $null = & { Get-MgReportSharePointSiteUsageStorage -Period $Period -OutFile $tempFile -ErrorAction Stop } *>&1 | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] }
+            $null = & { Get-MgReportSharePointSiteUsageStorage -Period $Period -OutFile $tempFile } *>&1 | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] }
+        }
+        catch {
+            if ( ($_.Exception.Message -notlike "Cannot set percent because PercentComplete cannot be greater than 100*") `
+                 -and ($_.Exception.Message -notlike "Der Prozentwert kann nicht festgelegt werden, da") ) {
+                throw $_
+            }
         }
         finally {
             $ProgressPreference = $oldProgress
@@ -2340,7 +2346,7 @@ function Save-TenantStorageSnapshot {
         # --- Deduplicate: only add snapshot if no snapshot exists for the same date + trigger ---
         $todayKey = (Get-Date).ToString("yyyy-MM-dd")
         $existsForToday = $timeline.Snapshots | Where-Object {
-            $_.CapturedAt -and $_.CapturedAt.Substring(0, 10) -eq $todayKey -and $_.Trigger -eq $Trigger
+            $_.CapturedAt -and $_.CapturedAt.ToString().Substring(0, 10) -eq $todayKey -and $_.Trigger -eq $Trigger
         }
 
         if (-not $existsForToday) {
