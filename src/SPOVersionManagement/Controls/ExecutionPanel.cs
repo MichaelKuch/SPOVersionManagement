@@ -284,7 +284,7 @@ namespace SPOVersionManagement.Controls
                 Location = new Point(8, 6),
                 Checked = true
             };
-            _rbDeleteByCount.CheckedChanged += (s, e) => ToggleDeleteMode();
+            _rbDeleteByCount.CheckedChanged += ToggleDeleteMode;
             _deleteByCountGroup.Controls.Add(_rbDeleteByCount);
 
             var lblMajor = new Label
@@ -324,7 +324,7 @@ namespace SPOVersionManagement.Controls
                 AutoSize = true,
                 Location = new Point(8, 6)
             };
-            _rbDeleteByAge.CheckedChanged += (s, e) => ToggleDeleteMode();
+            _rbDeleteByAge.CheckedChanged += ToggleDeleteMode;
             _deleteByAgeGroup.Controls.Add(_rbDeleteByAge);
 
             var lblDays = new Label
@@ -919,16 +919,24 @@ namespace SPOVersionManagement.Controls
         }
 
         private bool _togglingDeleteMode;
-        private void ToggleDeleteMode()
+        private void ToggleDeleteMode(object sender, EventArgs e)
         {
-            if (_togglingDeleteMode) return;
+            if (_togglingDeleteMode)
+                return;
+
             _togglingDeleteMode = true;
 
             // Radio buttons are in separate panels — enforce mutual exclusion manually
-            if (_rbDeleteByCount.Checked)
+            if (_rbDeleteByCount == sender)
+            {
+                _rbDeleteByCount.Checked = true;
                 _rbDeleteByAge.Checked = false;
-            else if (_rbDeleteByAge.Checked)
+            }
+            else if (_rbDeleteByAge == sender)
+            {
+                _rbDeleteByAge.Checked = true;
                 _rbDeleteByCount.Checked = false;
+            }
 
             bool byCount = _rbDeleteByCount.Checked;
             _nudMajorVer.Enabled = byCount;
@@ -1440,7 +1448,6 @@ namespace SPOVersionManagement.Controls
             if (!string.IsNullOrWhiteSpace(config.SamReportCsv)) _txtSamReportCsv.Text = config.SamReportCsv;
             _chkRetention.Checked = config.ManageRetention;
 
-            ToggleDeleteMode();
             SyncGraphOptions();
             }
             finally
@@ -1457,7 +1464,6 @@ namespace SPOVersionManagement.Controls
             // Clear session-specific state but keep all settings from GuiSettings.json
             _console.Clear(); _preservedConsoleText = string.Empty;
             LoadGuiSettings();
-            ToggleDeleteMode();
             SyncGraphOptions();
 
             // Ask user for a friendly name (with default suggestion). User can keep or edit.
