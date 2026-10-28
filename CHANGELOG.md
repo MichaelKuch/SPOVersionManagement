@@ -4,6 +4,16 @@ All notable changes to SPO Version Management are documented in this file.
 
 ---
 
+## v2.4.0.n (2026-10-26)
+- Warning about self-signed certificates must be added to the Trusted Root Authorities store for Connect-SPOService() to succeed
+- Added missing ToString() in Save-TenantStorageSnapshot()
+- Fix Get-MgReportSharePointSiteUsageStorage for English and German locale. The original fix does not work on recent powershells.
+- Import Microsoft.Online.SharePoint.PowerShell and fix step counter in ‎Start-SPOVersionManagement.ps1
+- Wrong parameter naming: -SkipGraph is -SkipGraphConnection
+- Fix mutual exclusion of the delete mode radio buttons
+
+---
+
 ## v2.4.0.6 (2026-06-16)
 
 **Stability & Large Tenant Fixes**
