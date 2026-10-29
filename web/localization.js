@@ -1191,6 +1191,10 @@ const LOCALIZATION = {
         en: "Skip sites that were successfully processed within this interval",
         pt: "Pular sites que foram processados com sucesso dentro deste intervalo"
     },
+    "settings.reexecutionDaysLabel": {
+        en: "days",
+        pt: "dias"
+    },
     "settings.reexecutionDisabled": {
         en: "Disabled (always process)",
         pt: "Desabilitado (sempre processar)"
