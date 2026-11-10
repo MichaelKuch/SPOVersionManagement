@@ -122,6 +122,7 @@ $script:PollingIntervalSeconds = 30
 $script:GraphConnected = $false
 $script:CurrentMajorVersionLimit = 4
 $script:CurrentMajorWithMinorVersionsLimit = 4
+$script:CurrentDeleteBeforeDays = 0
 $script:IncludedSites = @()
 $script:ExcludedSites = @()
 $script:AllSitesCache = $null  # Cache for Get-SPOSite -Limit All to avoid duplicate calls
@@ -3170,6 +3171,7 @@ function Save-SiteExecutionHistory {
                                         StorageAfterBytes = $exec.StorageAfterBytes
                                         MajorVersionLimit = $exec.MajorVersionLimit
                                         MajorWithMinorVersionsLimit = $exec.MajorWithMinorVersionsLimit
+                                        DeleteBeforeDays = $exec.DeleteBeforeDays
                                         VersionsKept = if ($exec.VersionsKept) { $exec.VersionsKept } else { 0 }
                                         VersionSizeBeforeBytes = if ($exec.VersionSizeBeforeBytes) { $exec.VersionSizeBeforeBytes } else { 0 }
                                         VersionSizeAfterBytes = if ($exec.VersionSizeAfterBytes) { $exec.VersionSizeAfterBytes } else { 0 }
@@ -3248,6 +3250,7 @@ function Save-SiteExecutionHistory {
             StorageAfterBytes = if ($ExecutionData.StorageAfterBytes) { [long]$ExecutionData.StorageAfterBytes } else { [long]0 }
             MajorVersionLimit = $script:CurrentMajorVersionLimit
             MajorWithMinorVersionsLimit = $script:CurrentMajorWithMinorVersionsLimit
+            DeleteBeforeDays = $script:CurrentDeleteBeforeDays
             VersionsKept = if ($ExecutionData.VersionsKept) { $ExecutionData.VersionsKept } else { 0 }
             VersionSizeBeforeBytes = if ($ExecutionData.VersionSizeBeforeBytes) { [long]$ExecutionData.VersionSizeBeforeBytes } else { [long]0 }
             VersionSizeAfterBytes = if ($ExecutionData.VersionSizeAfterBytes) { [long]$ExecutionData.VersionSizeAfterBytes } else { [long]0 }
@@ -3351,6 +3354,7 @@ function Update-JobStatus {
         [array]$RecentCompletedJobs = @(),
         [int]$MajorVersionLimit = 4,
         [int]$MajorWithMinorVersionsLimit = 4,
+        [int]$DeleteBeforeDays = 0,
         [switch]$DeleteOnly,
         [switch]$SyncOnly,
         [switch]$ManageRetentionPolicy
@@ -3370,6 +3374,7 @@ function Update-JobStatus {
         CompletedJobsCount = $RecentCompletedJobs.Count
         MajorVersionLimit = $MajorVersionLimit
         MajorWithMinorVersionsLimit = $MajorWithMinorVersionsLimit
+        DeleteBeforeDays = $DeleteBeforeDays
         DeleteOnly = [bool]$DeleteOnly
         SyncOnly = [bool]$SyncOnly
         ManageRetentionPolicy = [bool]$ManageRetentionPolicy
@@ -3748,6 +3753,7 @@ function Sync-ExternalJobResults {
                 CompletedJobsCount = $allCompletedJobs.Count
                 MajorVersionLimit = $script:CurrentMajorVersionLimit
                 MajorWithMinorVersionsLimit = $script:CurrentMajorWithMinorVersionsLimit
+                DeleteBeforeDays = $script:CurrentDeleteBeforeDays
             }
             
             # Read existing file to preserve other properties
@@ -3760,6 +3766,7 @@ function Sync-ExternalJobResults {
                 }
                 if ($existing.MajorVersionLimit) { $jobStatus.MajorVersionLimit = $existing.MajorVersionLimit }
                 if ($existing.MajorWithMinorVersionsLimit) { $jobStatus.MajorWithMinorVersionsLimit = $existing.MajorWithMinorVersionsLimit }
+                if ($existing.DeleteBeforeDays) { $jobStatus.DeleteBeforeDays = $existing.DeleteBeforeDays }
             }
             
             $jobStatusJson = $jobStatus | ConvertTo-Json -Depth 10
@@ -3799,6 +3806,7 @@ function Start-SPOVersionPolicyOrchestration {
         [int]$MaxConcurrentJobs = 10,
         [int]$MajorVersionLimit = 4,
         [int]$MajorWithMinorVersionsLimit = 4,
+        [int]$DeleteBeforeDays = 0,
         [int]$CheckBatchSize = 10,
         [int]$CheckBatchDelaySeconds = 2,
         [string]$SessionId,
@@ -3812,6 +3820,7 @@ function Start-SPOVersionPolicyOrchestration {
     
     $script:CurrentMajorVersionLimit = $MajorVersionLimit
     $script:CurrentMajorWithMinorVersionsLimit = $MajorWithMinorVersionsLimit
+    $script:CurrentDeleteBeforeDays = $DeleteBeforeDays
     
     # Load Dashboard config for reexecution settings
     $dashboardConfig = Get-DashboardConfig
@@ -3838,6 +3847,7 @@ function Start-SPOVersionPolicyOrchestration {
     Write-Host "  Max Parallel Jobs: $MaxConcurrentJobs" -ForegroundColor Gray
     Write-Host "  Major Version Limit: $MajorVersionLimit" -ForegroundColor Gray
     Write-Host "  Minor Version Limit: $MajorWithMinorVersionsLimit" -ForegroundColor Gray
+    Write-Host "  Delete Before Days: $DeleteBeforeDays" -ForegroundColor Gray
     if ($reexecutionDays -eq "ask") {
         Write-Host "  Reexecution Mode: ASK (prompt for recently processed sites)" -ForegroundColor Yellow
     }
@@ -4233,7 +4243,7 @@ function Start-SPOVersionPolicyOrchestration {
     
     # Write initial queue status so Dashboard shows sites immediately
     $initialQueuedList = @($siteQueue.ToArray())
-    Update-JobStatus -ActiveJobs @() -QueuedSites $initialQueuedList -RecentCompletedJobs @() -MajorVersionLimit $MajorVersionLimit -MajorWithMinorVersionsLimit $MajorWithMinorVersionsLimit -DeleteOnly:$DeleteOnly -SyncOnly:$SyncOnly -ManageRetentionPolicy:$ManageRetentionPolicy
+    Update-JobStatus -ActiveJobs @() -QueuedSites $initialQueuedList -RecentCompletedJobs @() -MajorVersionLimit $MajorVersionLimit -MajorWithMinorVersionsLimit $MajorWithMinorVersionsLimit -DeleteBeforeDays $DeleteBeforeDays -DeleteOnly:$DeleteOnly -SyncOnly:$SyncOnly -ManageRetentionPolicy:$ManageRetentionPolicy
     Write-Host "  [OK] Queue published to Dashboard ($($initialQueuedList.Count) sites)" -ForegroundColor Green
     
     try {
@@ -4262,7 +4272,7 @@ function Start-SPOVersionPolicyOrchestration {
             if ($i -gt 0 -and $i % 25 -eq 0) {
                 $activeList = @($activeJobs.Values)
                 $queuedList = @($siteQueue.ToArray())
-                Update-JobStatus -ActiveJobs $activeList -QueuedSites $queuedList -RecentCompletedJobs @($completedJobs.Values) -MajorVersionLimit $MajorVersionLimit -MajorWithMinorVersionsLimit $MajorWithMinorVersionsLimit -DeleteOnly:$DeleteOnly -SyncOnly:$SyncOnly -ManageRetentionPolicy:$ManageRetentionPolicy
+                Update-JobStatus -ActiveJobs $activeList -QueuedSites $queuedList -RecentCompletedJobs @($completedJobs.Values) -MajorVersionLimit $MajorVersionLimit -MajorWithMinorVersionsLimit $MajorWithMinorVersionsLimit -DeleteBeforeDays $DeleteBeforeDays -DeleteOnly:$DeleteOnly -SyncOnly:$SyncOnly -ManageRetentionPolicy:$ManageRetentionPolicy
             }
             
             $siteInfo = $siteQueue.Dequeue()
@@ -4524,8 +4534,14 @@ function Start-SPOVersionPolicyOrchestration {
                     }
                     
                     # Use New-SPOSiteFileVersionBatchDeleteJob
-                    $jobResult = New-SPOSiteFileVersionBatchDeleteJob -Identity $siteUrl -MajorVersionLimit $MajorVersionLimit -MajorWithMinorVersionsLimit $MajorWithMinorVersionsLimit -Confirm:$false -ErrorAction Stop
-                    
+                    if ($DeleteBeforeDays -gt 0) {
+                        Write-Host "    [DELETE] new SPO job [$siteUrl]: delete before $DeleteBeforeDays days"
+                        $jobResult = New-SPOSiteFileVersionBatchDeleteJob -Identity $siteUrl -DeleteBeforeDays $DeleteBeforeDays -Confirm:$false -ErrorAction Stop
+                    } else {
+                        Write-Host "    [DELETE] new SPO job [$siteUrl]: delete major $MajorVersionLimit, minor $MajorWithMinorVersionsLimit"
+                        $jobResult = New-SPOSiteFileVersionBatchDeleteJob -Identity $siteUrl -MajorVersionLimit $MajorVersionLimit -MajorWithMinorVersionsLimit $MajorWithMinorVersionsLimit -Confirm:$false -ErrorAction Stop
+                    }
+
                     # Try to get WorkItemId from return, otherwise use Get-SPOSiteFileVersionBatchDeleteJobProgress
                     $workItemId = $null
                     if ($jobResult -and $jobResult.WorkItemId) {
@@ -4663,7 +4679,7 @@ function Start-SPOVersionPolicyOrchestration {
             $activeList += $job
         }
         
-        Update-JobStatus -ActiveJobs $activeList -QueuedSites $queuedList -RecentCompletedJobs @($completedJobs.Values) -MajorVersionLimit $MajorVersionLimit -MajorWithMinorVersionsLimit $MajorWithMinorVersionsLimit -DeleteOnly:$DeleteOnly -SyncOnly:$SyncOnly -ManageRetentionPolicy:$ManageRetentionPolicy
+        Update-JobStatus -ActiveJobs $activeList -QueuedSites $queuedList -RecentCompletedJobs @($completedJobs.Values) -MajorVersionLimit $MajorVersionLimit -MajorWithMinorVersionsLimit $MajorWithMinorVersionsLimit -DeleteBeforeDays $DeleteBeforeDays -DeleteOnly:$DeleteOnly -SyncOnly:$SyncOnly -ManageRetentionPolicy:$ManageRetentionPolicy
         
         # Check status of active jobs
         $completedWorkItems = @()
@@ -4962,7 +4978,7 @@ function Start-SPOVersionPolicyOrchestration {
             if ($activeJobs -and $activeJobs.Count -gt 0) {
                 $activeList = @($activeJobs.Values)
             }
-            Update-JobStatus -ActiveJobs $activeList -QueuedSites $queuedList -RecentCompletedJobs @($completedJobs.Values) -MajorVersionLimit $MajorVersionLimit -MajorWithMinorVersionsLimit $MajorWithMinorVersionsLimit -DeleteOnly:$DeleteOnly -SyncOnly:$SyncOnly -ManageRetentionPolicy:$ManageRetentionPolicy
+            Update-JobStatus -ActiveJobs $activeList -QueuedSites $queuedList -RecentCompletedJobs @($completedJobs.Values) -MajorVersionLimit $MajorVersionLimit -MajorWithMinorVersionsLimit $MajorWithMinorVersionsLimit -DeleteBeforeDays $DeleteBeforeDays -DeleteOnly:$DeleteOnly -SyncOnly:$SyncOnly -ManageRetentionPolicy:$ManageRetentionPolicy
             if ($SessionId) {
                 $finalStatus = if ($siteQueue.Count -eq 0 -and $activeJobs.Count -eq 0) { "Completed" } else { "Interrupted" }
                 Update-SessionProgress -SessionId $SessionId -Status $finalStatus -ProcessedSites $processedCount -QueuedSites $siteQueue.Count | Out-Null
@@ -4979,7 +4995,7 @@ function Start-SPOVersionPolicyOrchestration {
     Write-Host "  Jobs skipped: $($skippedJobs.Count)" -ForegroundColor Gray
     
     # Update final status
-    Update-JobStatus -ActiveJobs @() -QueuedSites @() -RecentCompletedJobs @($completedJobs.Values) -MajorVersionLimit $MajorVersionLimit -MajorWithMinorVersionsLimit $MajorWithMinorVersionsLimit -DeleteOnly:$DeleteOnly -SyncOnly:$SyncOnly -ManageRetentionPolicy:$ManageRetentionPolicy
+    Update-JobStatus -ActiveJobs @() -QueuedSites @() -RecentCompletedJobs @($completedJobs.Values) -MajorVersionLimit $MajorVersionLimit -MajorWithMinorVersionsLimit $MajorWithMinorVersionsLimit -DeleteBeforeDays $DeleteBeforeDays -DeleteOnly:$DeleteOnly -SyncOnly:$SyncOnly -ManageRetentionPolicy:$ManageRetentionPolicy
 
     # Resume all suspended retention policies as safety net
     if ($ManageRetentionPolicy) {

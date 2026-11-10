@@ -11,6 +11,7 @@ All notable changes to SPO Version Management are documented in this file.
 - Import Microsoft.Online.SharePoint.PowerShell and fix step counter in ‎Start-SPOVersionManagement.ps1
 - Wrong parameter naming: -SkipGraph is -SkipGraphConnection
 - Fix mutual exclusion of the delete mode radio buttons
+- Properly support DeleteBeforeDays
 
 ---
 

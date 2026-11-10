@@ -71,6 +71,9 @@ param(
     [int]$MajorWithMinorVersionsLimit = 4,
 
     [Parameter(Mandatory = $false)]
+    [int]$DeleteBeforeDays = 0,
+
+    [Parameter(Mandatory = $false)]
     [int]$MaxConcurrentJobs = 10,
 
     [Parameter(Mandatory = $false)]
@@ -493,6 +496,7 @@ if ($pendingSessions -and $pendingSessions.Count -gt 0) {
     if ($useSessionConfig -and $resumeFromSession -and $resumeFromSession.Configuration) {
         $MajorVersionLimit = $resumeFromSession.Configuration.MajorVersionLimit
         $MajorWithMinorVersionsLimit = $resumeFromSession.Configuration.MajorWithMinorVersionsLimit
+        $DeleteBeforeDays = $resumeFromSession.Configuration.DeleteBeforeDays
         $MaxConcurrentJobs = $resumeFromSession.Configuration.MaxConcurrentJobs
         if ($resumeFromSession.Configuration.InputSiteListCSV) { $InputSiteListCSV = $resumeFromSession.Configuration.InputSiteListCSV }
         if ($resumeFromSession.Configuration.InputExclusionSiteListCSV) { $InputExclusionSiteListCSV = $resumeFromSession.Configuration.InputExclusionSiteListCSV }
@@ -861,6 +865,7 @@ if (-not $resumeExecution) {
         CompletedJobsCount         = 0
         MajorVersionLimit          = $MajorVersionLimit
         MajorWithMinorVersionsLimit = $MajorWithMinorVersionsLimit
+        DeleteBeforeDays           = $DeleteBeforeDays
     } | ConvertTo-Json -Depth 10
     Write-JsonFileSafe -FilePath $jobStatusFile -Content $initJson
     Write-Host "  [OK] Job status initialized" -ForegroundColor Green
@@ -931,6 +936,7 @@ Write-Host "  Auth:                   Entra ID App ($ClientId)" -ForegroundColor
 Write-Host "  Max Jobs:               $MaxConcurrentJobs" -ForegroundColor Cyan
 Write-Host "  Major Version Limit:    $MajorVersionLimit" -ForegroundColor Cyan
 Write-Host "  Minor Version Limit:    $MajorWithMinorVersionsLimit" -ForegroundColor Cyan
+Write-Host "  Delete Before Days:     $DeleteBeforeDays" -ForegroundColor Cyan
 Write-Host "  Unattended:             $Unattended" -ForegroundColor $(if ($Unattended) { "Yellow" } else { "Gray" })
 
 if ($SyncOnly) {
@@ -1027,6 +1033,7 @@ try {
         -AdminUrl $AdminUrl `
         -MajorVersionLimit $MajorVersionLimit `
         -MajorWithMinorVersionsLimit $MajorWithMinorVersionsLimit `
+        -DeleteBeforeDays $DeleteBeforeDays `
         -MaxConcurrentJobs $MaxConcurrentJobs `
         -InputSiteListCSV $InputSiteListCSV `
         -InputExclusionSiteListCSV $InputExclusionSiteListCSV `
@@ -1050,6 +1057,7 @@ try {
         MaxConcurrentJobs           = $MaxConcurrentJobs
         MajorVersionLimit           = $MajorVersionLimit
         MajorWithMinorVersionsLimit = $MajorWithMinorVersionsLimit
+        DeleteBeforeDays            = $DeleteBeforeDays
         CheckBatchSize              = $CheckBatchSize
         CheckBatchDelaySeconds      = $CheckBatchDelaySeconds
         SessionId                   = $sessionId

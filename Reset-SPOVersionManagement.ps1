@@ -306,6 +306,7 @@ $jobStatusFile = Join-Path $configPath "JobStatus.json"
     CompletedJobsCount = 0
     MajorVersionLimit = 4
     MajorWithMinorVersionsLimit = 4
+    DeleteBeforeDays = 0
 } | ConvertTo-Json -Depth 10 | Set-Content -Path $jobStatusFile -Encoding UTF8
 Write-Host "    [RESET] JobStatus.json" -ForegroundColor Green
 

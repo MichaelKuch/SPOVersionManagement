@@ -4659,7 +4659,7 @@
             </div>
             <div class="legend-item delete-legend">
                 <span class="legend-badge delete">DELETE</span>
-                <span class="legend-text" id="deleteLegendText">Deleting old versions (keeping <strong id="majorVersionLimit">--</strong> major and <strong id="minorVersionLimit">--</strong> minor)</span>
+                <span class="legend-text" id="deleteLegendText">Deleting old versions (keeping <strong id="majorVersionLimit">--</strong> major and <strong id="minorVersionLimit">--</strong> minor) or by max. days (delete older than <strong id="deleteBeforeDays">--</strong> days)</span>
             </div>
         </div>
         <div class="job-list" id="activeJobs">
@@ -8289,14 +8289,16 @@
                 document.getElementById('progressText').textContent = t('progress.waiting');
             }
             
-            // Update version limits in the legend (from JSON)
+            // Update version limits or delete before days in the legend (from JSON)
             const majorLimit = data.MajorVersionLimit || '--';
             const minorLimit = data.MajorWithMinorVersionsLimit || '--';
-            
-            const majorEl = document.getElementById('majorVersionLimit');
-            const minorEl = document.getElementById('minorVersionLimit');
-            if (majorEl) majorEl.textContent = majorLimit;
-            if (minorEl) minorEl.textContent = minorLimit;
+            const deleteBefore = data.DeleteBeforeDays || 0;
+
+            if (deleteBefore > 0) {
+                document.getElementById('deleteLegendText').textContent = 'Deleting versions older than '+deleteBefore+' days';
+            } else {
+                document.getElementById('deleteLegendText').textContent = 'Deleting old versions (keeping '+majorLimit+' major and '+minorLimit+' minor)';
+            }
             
             // Store orchestration mode flags for phase bar rendering
             orchestrationDeleteOnly = !!data.DeleteOnly;
