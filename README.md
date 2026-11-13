@@ -345,6 +345,11 @@ Install-Module -Name Microsoft.Graph -Force
     -MajorVersionLimit 20 `
     -MajorWithMinorVersionsLimit 20
 
+# Delete file versions older than 180 days
+.\Start-SPOVersionManagement.ps1 `
+    -AdminUrl "https://contoso-admin.sharepoint.com" `
+    -DeleteBeforeDays 180
+
 # Process only sites from a CSV list
 .\Start-SPOVersionManagement.ps1 `
     -AdminUrl "https://contoso-admin.sharepoint.com" `
